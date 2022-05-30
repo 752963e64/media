@@ -61,6 +61,7 @@ function media.load()
   elseif media.player.mode == 'sprite' then
     media.player.setup( 1, 30, 1/30 )
     media.player.ui = {}
+    media.frame.sps = { 64, 64 } -- squared pratical shape
   
   else
     assert( media.player.mode, "no media.player.mode set, cannot continue." )
