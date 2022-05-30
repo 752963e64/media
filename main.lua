@@ -23,7 +23,7 @@ function love.load()
 
   error = {}
   error.dt = 0
-
+  ui = love.graphics.newImage( 'ui.png' )
   event.load()
   media.load()
 end
@@ -86,6 +86,8 @@ end
 
 function love.draw()
   media.draw()
+
+  love.graphics.draw( ui, 0, 0 )
   -- love.graphics.printf( "engine FPS: " .. love.timer.getFPS(), 0, 5, 845, "center" )
   event.draw( media.window.width, media.window.height )
 end
