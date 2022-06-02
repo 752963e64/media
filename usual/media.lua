@@ -44,6 +44,10 @@ function media.load()
 
   if media.player.mode == 'video' then
     media.player.setup( 3, 25, 1/25 )
+    media.player.ui = {}
+    media.player.ui.frame = love.graphics.newImage( 'ui.png' )
+    media.player.ui.width = media.player.ui.frame:getWidth()
+    media.player.ui.height = media.player.ui.frame:getHeight()
   
   elseif media.player.mode == 'diaporama' then
     media.player.setup( 1, 25, 1/25 )
@@ -323,6 +327,10 @@ function media.draw()
           "center" )
       end
     end
+  end
+
+  if media.player.ui then
+    love.graphics.draw( media.player.ui.frame, 0, 0 )
   end
 end
 
