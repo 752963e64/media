@@ -44,6 +44,7 @@ function media.load()
 
   if media.player.mode == 'video' then
     media.player.setup( 3, 25, 1/25 )
+    media.player.cache = true
     media.player.ui = {}
     media.player.ui.frame = love.graphics.newImage( 'ui.png' )
     media.player.ui.width = media.player.ui.frame:getWidth()
@@ -74,6 +75,7 @@ function media.load()
   if media.player.ui then
     media.player.ui.button_previous_frame = true
     media.player.ui.button_next_frame = true
+    media.player.ui.button_quit = true
   end
 
   media.frame.dt = 0
@@ -98,7 +100,37 @@ function media.load()
 
   media.frame.total = helper.countFiles( media.player.pathprefix )
 
+  if media.player.cache then
+    -- media.loadcache()
+  end
+
   media.play()
+end
+
+function media.loadcache()
+  media.frame.images = {}
+  local i = 0
+  while i < media.frame.total do
+    i = i +1  
+    media.frame.fullpath = media.player.pathprefix ..
+    media.player.fileprefix ..
+    i .. media.player.fileext
+    
+    if love.filesystem.isFile( media.frame.fullpath ) then
+      table.insert( media.frame.images, { image = love.graphics.newImage( media.frame.fullpath ), width = 0, height = 0 } )
+      -- store frames and size
+      local n = #media.frame.images
+      if media.frame.images[n].image then
+        media.frame.images[n].width = media.frame.images[n].image:getWidth()
+        media.frame.images[n].height = media.frame.images[n].image:getHeight()
+        -- if media.window.width ~= media.frame.images[n].width and not media.window.flags.fullscreen then
+        --   love.window.setMode( media.frame.images[n].width, media.frame.images[n].height, media.window.flags )
+        -- end
+      end
+    else
+      media.error = 'Not a file: ' .. media.frame.fullpath
+    end
+  end
 end
 
 function media.play()
@@ -211,50 +243,58 @@ function media.update( dt )
       
     if media.frame.next then
       media.frame.next = nil
-      if media.frame.idx > media.frame.total then
+      if media.frame.idx >= media.frame.total then
         media.stop()
       else
         media.frame.image = nil
         
-        if media.frame.idx > 0 and ( media.frame.idx % 5 ) == 0 then
-          collectgarbage()
-        end
+        if not media.player.cache then
+          if media.frame.idx > 0 and ( media.frame.idx % 5 ) == 0 then
+            media.player.memflush = true
+            collectgarbage()
+          end
 
-	      media.frame.fullpath = media.player.pathprefix ..
-          media.player.fileprefix ..
-          media.frame.idx ..
-          media.player.fileext
+	        media.frame.fullpath = media.player.pathprefix ..
+            media.player.fileprefix ..
+            media.frame.idx ..
+            media.player.fileext
         
-        if love.filesystem.isFile( media.frame.fullpath ) then
-	        media.frame.image = love.graphics.newImage( media.frame.fullpath )
-          -- store frame size
-          if media.frame.image then
-            media.frame.width = media.frame.image:getWidth()
-            media.frame.height = media.frame.image:getHeight()
-            if media.window.width ~= media.frame.width and not media.window.flags.fullscreen then
-              love.window.setMode( media.frame.width, media.frame.height, media.window.flags )
+          if love.filesystem.isFile( media.frame.fullpath ) then
+	          media.frame.image = love.graphics.newImage( media.frame.fullpath )
+            -- store frame size
+            if media.frame.image then
+              media.frame.width = media.frame.image:getWidth()
+              media.frame.height = media.frame.image:getHeight()
+              if media.window.width ~= media.frame.width and not media.window.flags.fullscreen then
+                love.window.setMode( media.frame.width, media.frame.height, media.window.flags )
+              end
             end
-          end
-        else
-          media.error = 'Not a file: ' .. media.frame.fullpath
-          media.stop()
-        end
-  
-        if media.player.playing then
-          media.window.width, media.window.height = love.window.getDimensions( )
-  
-          if love.window.getFullscreen() then
-            media.frame.x = (media.window.width-media.frame.width)/2
-            media.frame.y = (media.window.height-media.frame.height)/2
           else
-            if media.frame.x ~= 0 and media.frame.y ~= 0 then
-              media.frame.x, media.frame.y = 0, 0;
+            media.error = 'Not a file: ' .. media.frame.fullpath
+            media.stop()
+          end
+
+          if media.player.playing then
+            media.window.width, media.window.height = love.window.getDimensions( )
+  
+            if love.window.getFullscreen() then
+              media.frame.x = (media.window.width-media.frame.width)/2
+              media.frame.y = (media.window.height-media.frame.height)/2
+            else
+              if media.frame.x ~= 0 and media.frame.y ~= 0 then
+                media.frame.x, media.frame.y = 0, 0
+              end
             end
           end
+        end -- no cache
+        if media.frame.images then
+          media.frame.image = media.frame.images[media.frame.idx].image
+          media.frame.width = media.frame.images[media.frame.idx].width
+          media.frame.height = media.frame.images[media.frame.idx].height
+          media.frame.x, media.frame.y = (media.window.width-media.frame.width)/2, (media.window.height-media.frame.height)/2
         end
       end
     end
-
     -- testing frame persec
     media.player.dt = media.player.dt + dt
     
@@ -268,7 +308,7 @@ function media.update( dt )
 	      media.frame.fps = media.frame.idx
       end
       
-      if media.frame.fps <= (media.player.fps-5) then
+      if media.frame.fps <= media.player.fps-(media.player.fps/5) then
         media.errorcooldown = media.errorcooldown +1
         if media.errorcooldown == 3 then
           media.errorcooldown = 0

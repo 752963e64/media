@@ -83,7 +83,7 @@ function love.mousereleased( x, y, button )
     elseif button == 'x2' then
       assert(false, 'custom mouse button x2')
     else
-      assert(false,"droped mouse button:" .. button)
+      assert(false, 'droped mouse button:' .. button)
     end
   end
 end
