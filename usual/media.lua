@@ -36,8 +36,8 @@ end
 
 function media.load()
   media.player.dt = 0             -- delta time
-  media.player.timeelapsed = 0     
-  media.player.playing = false 
+  media.player.timeelapsed = 0
+  media.player.playing = false
   media.player.pathprefix = 'frames/'
   media.player.fileprefix = 'frame-'  
   media.player.fileext = '.png' -- .bmp, .tga, .jpg
@@ -103,7 +103,10 @@ end
 
 function media.play()
   media.player.playing = true
-  if media.audio and media.audio.source then love.audio.play( media.audio.source ) end
+  
+  if media.audio and media.audio.source then
+    love.audio.play( media.audio.source )
+  end
 end
 
 function media.pause()
@@ -187,6 +190,7 @@ end
 
 function media.fullscreen()
   local ok = false
+  assert( media.window.flags, "Window structure missing... media.window.flags" )
   
   if love.window.getFullscreen() then
     media.window.flags.fullscreen = false
@@ -211,8 +215,11 @@ function media.update( dt )
         media.stop()
       else
         media.frame.image = nil
-        collectgarbage()
-  
+        
+        if media.frame.idx > 0 and ( media.frame.idx % 5 ) == 0 then
+          collectgarbage()
+        end
+
 	      media.frame.fullpath = media.player.pathprefix ..
           media.player.fileprefix ..
           media.frame.idx ..
@@ -233,7 +240,6 @@ function media.update( dt )
           media.stop()
         end
   
-        -- media.fullscreen = love.window.getFullscreen()
         if media.player.playing then
           media.window.width, media.window.height = love.window.getDimensions( )
   
