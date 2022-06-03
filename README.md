@@ -1,7 +1,7 @@
 # media
 media.love aims to be a library and also a pratical software.
 
-- to use media.love you need to install löve2D first.
+- to use media.love you need to install löve2D-9.1 first.
 - then double click on media.love from your lovely file manager.
 - if it doesn't work open a terminal, move to media directory and try this:
 ```bash
@@ -29,5 +29,3 @@ love media.love
 #### sprite mode TODO
 - play, stop, pause, loop, next, back
 - mainly to test image sprites
-
-
