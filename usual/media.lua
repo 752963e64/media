@@ -84,10 +84,8 @@ function media.load()
   media.frame.width = 0
   media.frame.height = 0
   media.frame.image = nil
-  media.frame.fps = 0 -- the recorded rate
+  media.frame.fps = 0         -- the recorded rate
   media.frame.rendered = 0
-
-  media.display.fullscreen = false
 
   media.window.width, media.window.height, media.window.flags = love.window.getMode()
   media.display.width, media.display.height = love.window.getDesktopDimensions( media.window.flags.display )
@@ -95,12 +93,10 @@ function media.load()
   media.errorcooldown = 0
   media.error = nil
 
-  if love.filesystem.isDirectory( media.player.pathprefix ) then
-    media.frame.total = helper.countFiles( media.player.pathprefix )
-  else
-    media.error = "Unable to open media.player.pathprefix:" .. media.player.pathprefix
-    love.event.quit()
-  end
+  assert( love.filesystem.isDirectory( media.player.pathprefix ),
+      "Unable to open media.player.pathprefix:" .. media.player.pathprefix )
+
+  media.frame.total = helper.countFiles( media.player.pathprefix )
 
   media.play()
 end
@@ -190,15 +186,19 @@ function media.step( dt )
 end
 
 function media.fullscreen()
-  -- success = love.window.setFullscreen( not love.window.getFullscreen() )
+  local ok = false
+  
   if love.window.getFullscreen() then
     media.window.flags.fullscreen = false
-    success = love.window.setMode( media.frame.width, media.frame.height, media.window.flags )
+    ok = love.window.setMode( media.frame.width, media.frame.height, media.window.flags )
   else
     media.window.flags.fullscreen = true
-    success = love.window.setMode( media.display.width, media.display.height, media.window.flags )
+    ok = love.window.setMode( media.display.width, media.display.height, media.window.flags )
   end  
-  if not success then media.error = 'Unable to setup fullscreen mode.' end
+  
+  if not ok then
+    media.error = 'Unable to setup fullscreen mode.'
+  end
 end
 
 function media.update( dt )
