@@ -1,26 +1,40 @@
-require( 'usual/helper' )
-require( 'usual/event' )
-require( 'usual/media' )
+local helper = require( 'usual/helper' )
+local event = require( 'usual/event' )
+local media = require( 'usual/media' )
+
 
 function love.errhand( message )
   print( message )
 end
 
+--[[
+  As you can see all the control is bind from there.
+  The main goal is to keep media.lua an handy module
+  for older love version, currently 9.1.
+
+  The main things to perform are to setup media.player.mode,
+  your audio source[optional], the control input you wich to handle[optional].
+
+  All options will be documented as soon I entirely define internal correctly.
+]]--
+
 function love.load()
-  media.showinfo = true
-  event.showinfo = true
-  helper.loadFont( 'ubuntu-b.ttf' )
+  media.showinfo = true                    -- print information to screen
+  event.showinfo = true                    --  "                       "
+  helper.loadFont( 'ubuntu-b.ttf' )        -- load a font
 
   if media.player then
     media.player.mode = 'video'            -- player mode
     media.player.fps = 25                  -- fixed frame per sec  
     media.player.dpf = 1/media.player.fps  -- delta per frame
-    media.player.keyboard = {}
-    media.player.mouse = {}
+    media.player.cache = true              -- cache entire content to be played
+    media.player.autoplay = true           -- play either directly or after loading cache 
+    media.player.keyboard = {}             -- allows keyboard input
+    media.player.mouse = {}                -- allow mouse input
   end
 
   if media.audio then
-    media.audio.source = helper.loadAudio( 'output.mp3' )
+    media.audio.source = helper.loadAudio( 'output.mp3' ) -- load audio source to be played 
   end
 
   error = {}

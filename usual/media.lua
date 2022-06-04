@@ -1,4 +1,5 @@
-require( 'usual/helper' )
+local helper = require( 'usual/helper' )
+local loader = require( 'usual/loader' )
 
 media = {}
 
@@ -78,19 +79,25 @@ function media.load()
     media.player.ui.button_quit = true
   end
 
-  media.frame.dt = 0
-  media.frame.idx = 1
-  media.frame.next = true
-  media.frame.x = 0
-  media.frame.y = 0
-  media.frame.width = 0
-  media.frame.height = 0
-  media.frame.image = nil
-  media.frame.fps = 0         -- the recorded rate
-  media.frame.rendered = 0
-
-  media.window.width, media.window.height, media.window.flags = love.window.getMode()
-  media.display.width, media.display.height = love.window.getDesktopDimensions( media.window.flags.display )
+  media.frame = {
+    dt = 0,
+    idx = 1,
+    next = true,
+    x = 0,
+    y = 0,
+    width = 0,
+    height = 0,
+    image = nil,
+    fps = 0,         -- the recorded rate
+    rendered = 0
+  }
+  
+  media.window.width,
+  media.window.height,
+  media.window.flags = love.window.getMode()
+  
+  media.display.width,
+  media.display.height = love.window.getDesktopDimensions( media.window.flags.display )
 
   media.errorcooldown = 0
   media.error = nil
@@ -100,14 +107,84 @@ function media.load()
 
   media.frame.total = helper.countFiles( media.player.pathprefix )
 
-  if media.player.cache then
-    -- media.loadcache()
-  end
+  media.buf, media.load = 0, 0
 
-  media.play()
+  media.frame.images = {}
+
+  --------------------------------------------------------------------------------
+  loader.loading = false                    -- loader processing
+  
+  loader.width = (media.window.width/12)    -- loader bar width
+  loader.height = 10                        -- loader bar height
+  
+  loader.x = (media.window.width/5)*2       -- loader x axis
+  -- ( love.graphics.getWidth() - loader.width )/2
+
+  loader.y = 5                              -- loader y axis (cuz i know ui thickness...)
+  -- ( love.graphics.getHeight() - loader.height )/2
+    
+  loader.current = 0
+  loader.max = 100
+  loader.padding = 3
+  
+  loader.color = {}
+  loader.color.outline = { 58, 55, 88, 255 }
+  loader.color.bar = { 95, 205, 228, 255 }
+  loader.color.text = { 95, 205, 228, 255 }
+  
+  loader.r,
+  loader.g,
+  loader.b,
+  loader.a = love.graphics.getColor()
+  
+  loader.text = "loading ..."
+
+  -- media.play()
 end
 
 function media.loadcache()
+  local i = 0
+  if #media.frame.images > 0 then
+    i = #media.frame.images
+  end
+  
+  while i < media.frame.total do
+    i = i +1
+
+    media.frame.fullpath = media.player.pathprefix ..
+    media.player.fileprefix ..
+    i .. media.player.fileext
+    
+    if love.filesystem.isFile( media.frame.fullpath ) then
+      table.insert( media.frame.images,
+        { image = love.graphics.newImage( media.frame.fullpath ), width = 0, height = 0 } )
+      
+      -- store frames and size
+      local n = #media.frame.images
+      if media.frame.images[n].image then
+        media.frame.images[n].width = media.frame.images[n].image:getWidth()
+        media.frame.images[n].height = media.frame.images[n].image:getHeight()
+        -- scale to frame option?
+        -- if media.window.width ~= media.frame.images[n].width and not media.window.flags.fullscreen then
+        --   love.window.setMode( media.frame.images[n].width, media.frame.images[n].height, media.window.flags )
+        -- end
+      end
+    else
+      media.error = 'Not a file: ' .. media.frame.fullpath
+    end
+
+    if i > 0 and ( i % 10 ) == 0 then
+      media.load = media.load + 2 ^ 5
+      if media.load >= 100 then
+        media.load = 0
+      end
+      break
+    end
+  end
+  local ret = (#media.frame.images/media.frame.total)
+  return ret*100
+
+  --[[-------------------------------------------------------------------------------------------
   media.frame.images = {}
   local i = 0
   while i < media.frame.total do
@@ -131,6 +208,7 @@ function media.loadcache()
       media.error = 'Not a file: ' .. media.frame.fullpath
     end
   end
+  --]]-------------------------------------------------------------------------------------------
 end
 
 function media.play()
@@ -226,7 +304,7 @@ function media.fullscreen()
   
   if love.window.getFullscreen() then
     media.window.flags.fullscreen = false
-    ok = love.window.setMode( media.frame.width, media.frame.height, media.window.flags )
+    ok = love.window.setMode( media.window.width, media.window.height, media.window.flags )
   else
     media.window.flags.fullscreen = true
     ok = love.window.setMode( media.display.width, media.display.height, media.window.flags )
@@ -238,6 +316,28 @@ function media.fullscreen()
 end
 
 function media.update( dt )
+  if media.player.cache and not media.playing then
+    loader.loading = true
+    if dt < 0.04 then
+      media.buf = media.loadcache()
+      loader.current = media.load
+      if media.load >= 100 then
+        media.load = 0
+      end
+      print(media.buf)
+    end
+    if media.buf >= 100 then
+      loader.loading = false
+      loader.current = 100
+      if media.player.autoplay then
+        media.play()
+      end
+      loader.text = "Done!"
+    elseif media.buf > 0 then
+      loader.text = media.frame.fullpath .. " " .. string.format( "%.02f%%", media.buf )
+    end
+  end
+
   if media.player.playing then
     media.step( dt )
       
@@ -377,6 +477,10 @@ function media.draw()
 
   if media.player.ui then
     love.graphics.draw( media.player.ui.frame, 0, 0 )
+  end
+
+  if loader.loading then
+    loader.draw()
   end
 end
 
