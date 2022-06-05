@@ -1,3 +1,9 @@
+--[[
+
+ DO NOT EDIT UNLESS YOU KNOW WHAT YOU DOING.
+
+]]--
+
 function love.conf(t)
     -- t.identity = '~/.local/share/love/' -- The name of the save directory (string)
     t.version = '0.9.1'                -- The LÖVE version this game was made for (string)
@@ -5,8 +11,8 @@ function love.conf(t)
 
     t.window.title = 'media.love'      -- The window title (string)
     t.window.icon = 'media.png'        -- Filepath to an image to use as the window's icon (string)
-    t.window.width = 520               -- The window width (number)
-    t.window.height = 280              -- The window height (number)
+    t.window.width = 1024               -- The window width (number)
+    t.window.height = 768              -- The window height (number)
     t.window.borderless = true         -- Remove all border visuals from the window (boolean)
     t.window.resizable = false         -- Let the window be user-resizable (boolean)
     t.window.minwidth = 1              -- Minimum window width if the window is resizable (number)

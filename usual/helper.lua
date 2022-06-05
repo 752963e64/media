@@ -4,6 +4,8 @@ helper = {
 }
 
 function helper.loadFont( filepath, size )
+  assert( love.filesystem.isFile( filepath ), 'That font file doesn\'t exists.' )
+
   local xft = {}
   
   xft.size = 11

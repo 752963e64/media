@@ -33,24 +33,32 @@ function media.player.setup( step, fps, dpf )
   if not media.player.fileext then
     media.player.fileext = '.png' -- .bmp, .tga, .jpg
   end
+
+  if media.player.font and type(media.player.font) == 'string' then
+    helper.loadFont( media.player.font )
+  end
+
+  if media.audio.source and type(media.audio.source) == 'string' then
+    media.audio.source = helper.loadAudio( media.audio.source )
+  end
 end
 
 function media.load()
-  media.player.dt = 0             -- delta time
+  media.player.dt = 0                 -- delta time
   media.player.timeelapsed = 0
   media.player.playing = false
   media.player.pathprefix = 'frames/'
   media.player.fileprefix = 'frame-'  
-  media.player.fileext = '.png' -- .bmp, .tga, .jpg
+  media.player.fileext = '.png'       -- .bmp, .tga, .jpg
 
   if media.player.mode == 'video' then
     media.player.setup( 3, 25, 1/25 )
-    media.player.cache = true
     media.player.ui = {}
     media.player.ui.frame = love.graphics.newImage( 'ui.png' )
-    media.player.ui.width = media.player.ui.frame:getWidth()
-    media.player.ui.height = media.player.ui.frame:getHeight()
-  
+    if media.player.ui.frame then
+      media.player.ui.width = media.player.ui.frame:getWidth()
+      media.player.ui.height = media.player.ui.frame:getHeight()
+    end
   elseif media.player.mode == 'diaporama' then
     media.player.setup( 1, 25, 1/25 )
     media.player.effect = {}
@@ -74,6 +82,7 @@ function media.load()
   end
 
   if media.player.ui then
+    media.player.scaling = 'ui'
     media.player.ui.button_previous_frame = true
     media.player.ui.button_next_frame = true
     media.player.ui.button_quit = true
@@ -95,7 +104,12 @@ function media.load()
   media.window.width,
   media.window.height,
   media.window.flags = love.window.getMode()
-  
+
+  if media.player.fullscreen and media.player.fullscreen.enable then
+    media.window.flags.fullscreen = true
+    love.window.setMode( media.window.width, media.window.height, media.window.flags )
+  end
+
   media.display.width,
   media.display.height = love.window.getDesktopDimensions( media.window.flags.display )
 
@@ -109,28 +123,29 @@ function media.load()
 
   media.buf, media.load = 0, 0
 
-  media.frame.images = {}
+  if media.player.cache then
+    media.frame.cache = {}
+  end
 
-  --------------------------------------------------------------------------------
+  -------[[ loader ]]-------------------------------------------------------------------------
   loader.loading = false                    -- loader processing
   
-  loader.width = (media.window.width/12)    -- loader bar width
+  loader.width = 30                         -- loader bar width
   loader.height = 10                        -- loader bar height
-  
-  loader.x = (media.window.width/5)*2       -- loader x axis
-  -- ( love.graphics.getWidth() - loader.width )/2
 
-  loader.y = 5                              -- loader y axis (cuz i know ui thickness...)
-  -- ( love.graphics.getHeight() - loader.height )/2
-    
+
+  loader.x = (media.window.width-media.player.ui.width)/2 + media.player.ui.width/2   -- loader x axis
+  loader.y = (media.window.height-media.player.ui.height)/2 + media.player.ui.height-15        -- loader y axis (cuz i know ui thickness...)
+
   loader.current = 0
   loader.max = 100
   loader.padding = 3
   
-  loader.color = {}
-  loader.color.outline = { 58, 55, 88, 255 }
-  loader.color.bar = { 95, 205, 228, 255 }
-  loader.color.text = { 95, 205, 228, 255 }
+  loader.color = {
+    outline = { 58, 55, 88, 255 },
+    bar =     { 95, 205, 228, 255 },
+    text =    { 95, 205, 228, 255 }
+  }
   
   loader.r,
   loader.g,
@@ -144,8 +159,8 @@ end
 
 function media.loadcache()
   local i = 0
-  if #media.frame.images > 0 then
-    i = #media.frame.images
+  if #media.frame.cache > 0 then
+    i = #media.frame.cache
   end
   
   while i < media.frame.total do
@@ -156,17 +171,18 @@ function media.loadcache()
     i .. media.player.fileext
     
     if love.filesystem.isFile( media.frame.fullpath ) then
-      table.insert( media.frame.images,
+      table.insert( media.frame.cache,
         { image = love.graphics.newImage( media.frame.fullpath ), width = 0, height = 0 } )
       
       -- store frames and size
-      local n = #media.frame.images
-      if media.frame.images[n].image then
-        media.frame.images[n].width = media.frame.images[n].image:getWidth()
-        media.frame.images[n].height = media.frame.images[n].image:getHeight()
+      local n = #media.frame.cache
+      if media.frame.cache[n].image then
+        media.frame.cache[n].width = media.frame.cache[n].image:getWidth()
+        media.frame.cache[n].height = media.frame.cache[n].image:getHeight()
+        media.frame.cache[n].fullpath = media.frame.fullpath
         -- scale to frame option?
-        -- if media.window.width ~= media.frame.images[n].width and not media.window.flags.fullscreen then
-        --   love.window.setMode( media.frame.images[n].width, media.frame.images[n].height, media.window.flags )
+        -- if media.window.width ~= media.frame.cache[n].width and not media.window.flags.fullscreen then
+        --   love.window.setMode( media.frame.cache[n].width, media.frame.cache[n].height, media.window.flags )
         -- end
       end
     else
@@ -181,11 +197,11 @@ function media.loadcache()
       break
     end
   end
-  local ret = (#media.frame.images/media.frame.total)
+  local ret = (#media.frame.cache/media.frame.total)
   return ret*100
 
   --[[-------------------------------------------------------------------------------------------
-  media.frame.images = {}
+  media.frame.cache = {}
   local i = 0
   while i < media.frame.total do
     i = i +1  
@@ -194,14 +210,14 @@ function media.loadcache()
     i .. media.player.fileext
     
     if love.filesystem.isFile( media.frame.fullpath ) then
-      table.insert( media.frame.images, { image = love.graphics.newImage( media.frame.fullpath ), width = 0, height = 0 } )
+      table.insert( media.frame.cache, { image = love.graphics.newImage( media.frame.fullpath ), width = 0, height = 0 } )
       -- store frames and size
-      local n = #media.frame.images
-      if media.frame.images[n].image then
-        media.frame.images[n].width = media.frame.images[n].image:getWidth()
-        media.frame.images[n].height = media.frame.images[n].image:getHeight()
-        -- if media.window.width ~= media.frame.images[n].width and not media.window.flags.fullscreen then
-        --   love.window.setMode( media.frame.images[n].width, media.frame.images[n].height, media.window.flags )
+      local n = #media.frame.cache
+      if media.frame.cache[n].image then
+        media.frame.cache[n].width = media.frame.cache[n].image:getWidth()
+        media.frame.cache[n].height = media.frame.cache[n].image:getHeight()
+        -- if media.window.width ~= media.frame.cache[n].width and not media.window.flags.fullscreen then
+        --   love.window.setMode( media.frame.cache[n].width, media.frame.cache[n].height, media.window.flags )
         -- end
       end
     else
@@ -302,30 +318,47 @@ function media.fullscreen()
   local ok = false
   assert( media.window.flags, "Window structure missing... media.window.flags" )
   
-  if love.window.getFullscreen() then
+  if love.window.getFullscreen() and not media.player.lockfullscreen then
     media.window.flags.fullscreen = false
-    ok = love.window.setMode( media.window.width, media.window.height, media.window.flags )
+    if media.player.scaling == 'ui' then
+      ok = love.window.setMode( media.player.ui.width, media.player.ui.height, media.window.flags )
+      media.window.width, media.window.height = media.player.ui.width, media.player.ui.height
+    else
+      ok = love.window.setMode( media.window.width, media.window.height, media.window.flags )
+    end
   else
-    media.window.flags.fullscreen = true
-    ok = love.window.setMode( media.display.width, media.display.height, media.window.flags )
+    if media.window.flags and not media.window.flags.fullscreen then
+      media.window.flags.fullscreen = true
+      ok = love.window.setMode( media.display.width, media.display.height, media.window.flags )
+      media.window.width, media.window.height = media.display.width, media.display.height
+      loader.x = (media.window.width-media.player.ui.width)/2 + media.player.ui.width/2   -- loader x axis
+      loader.y = (media.window.height-media.player.ui.height)/2 + media.player.ui.height-15
+    end
   end  
   
   if not ok then
-    media.error = 'Unable to setup fullscreen mode.'
+    if media.player.lockfullscreen then
+      media.error = 'Unable to setup fullscreen; see media.player.lockfullscreen.'
+    else
+      media.error = 'Unable to setup fullscreen mode.'
+    end
   end
 end
 
 function media.update( dt )
   if media.player.cache and not media.playing then
+    
     loader.loading = true
+    
     if dt < 0.04 then
       media.buf = media.loadcache()
       loader.current = media.load
       if media.load >= 100 then
         media.load = 0
       end
-      print(media.buf)
+      -- print(media.buf)
     end
+    
     if media.buf >= 100 then
       loader.loading = false
       loader.current = 100
@@ -336,6 +369,7 @@ function media.update( dt )
     elseif media.buf > 0 then
       loader.text = media.frame.fullpath .. " " .. string.format( "%.02f%%", media.buf )
     end
+  
   end
 
   if media.player.playing then
@@ -387,11 +421,12 @@ function media.update( dt )
             end
           end
         end -- no cache
-        if media.frame.images then
-          media.frame.image = media.frame.images[media.frame.idx].image
-          media.frame.width = media.frame.images[media.frame.idx].width
-          media.frame.height = media.frame.images[media.frame.idx].height
+        if media.frame.cache then
+          media.frame.image = media.frame.cache[media.frame.idx].image
+          media.frame.width = media.frame.cache[media.frame.idx].width
+          media.frame.height = media.frame.cache[media.frame.idx].height
           media.frame.x, media.frame.y = (media.window.width-media.frame.width)/2, (media.window.height-media.frame.height)/2
+          media.frame.fullpath = media.frame.cache[media.frame.idx].fullpath
         end
       end
     end
@@ -476,12 +511,10 @@ function media.draw()
   end
 
   if media.player.ui then
-    love.graphics.draw( media.player.ui.frame, 0, 0 )
+    love.graphics.draw( media.player.ui.frame, (media.window.width-media.player.ui.width)/2, (media.window.height-media.player.ui.height)/2 )
   end
 
-  if loader.loading then
-    loader.draw()
-  end
+  loader.draw()
 end
 
 return media
