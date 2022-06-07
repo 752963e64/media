@@ -139,7 +139,14 @@ function media.load()
   media.frame.image = nil
   media.frame.fps = 0         -- the recorded rate
   media.frame.rendered = 0
-  media.frame.quad = love.graphics.newQuad(0, 0, media.player.ui.width, media.player.ui.height, media.player.ui.width, media.player.ui.height)
+
+  if media.frame.resize then
+    media.frame.quad = love.graphics.newQuad( 0, 0,
+      media.frame.resize.width,
+      media.frame.resize.height,
+      media.frame.resize.width,
+      media.frame.resize.height )
+  end
 
 
   media.errorcooldown = 0
@@ -478,11 +485,13 @@ function media.update( dt )
         end
       end
     end
-    -- testing frame persec
+
+    media.player.timeelapsed = media.player.timeelapsed+dt
+
     media.player.dt = media.player.dt + dt
-    
+
+    -- testing frame persec
     if media.player.playing and media.player.dt >= 1 then
-      media.player.timeelapsed = media.player.timeelapsed+media.player.dt
       media.player.dt = 0
       if media.frame.fps > 0 then
 	      media.frame.rendered = media.frame.rendered + media.frame.fps 
@@ -504,7 +513,13 @@ end
 
 function media.draw()
   if media.frame.image then
-    love.graphics.draw( media.frame.image, media.frame.quad, media.player.ui.x, media.player.ui.y )
+
+    love.graphics.draw(
+      media.frame.image,
+      media.frame.quad,
+      media.player.ui.x+(media.player.ui.width-media.frame.resize.width)/2,
+      media.player.ui.y )
+    
     -- love.graphics.draw( media.frame.image, media.frame.x, media.frame.y )
 
     if not media.showinfo then return end
@@ -512,7 +527,7 @@ function media.draw()
     if media.window.width > 0 and media.frame.width > 0 then
       love.graphics.printf( "FPS: " .. media.frame.fps ..
         " time step: " .. media.player.dpf ..
-        " duration: " .. media.player.timeelapsed,
+        " duration: " .. string.format( "%.02fs", media.player.timeelapsed ),
         (media.window.width/2)-175,
         media.window.height-(media.window.height-20),
         350,

@@ -33,10 +33,13 @@ function love.load()
     media.audio.source = 'output.mp3'      -- audio source
     media.player.keyboard = {}             -- allows keyboard input
     media.player.mouse = {}                -- allows mouse input
-    media.frame.resizeto = 'ui'              -- resize frames
+    media.frame.resize = {                 -- if you wish to resize frames
+      width = 480,
+      height = 280
+    }
 
     media.player.fullscreen = {
-      enable  = true,                     -- fullscreen by default
+      enable  = false,                     -- fullscreen by default
       lock    = false,                     -- lock fullscreen
       type    = 'normal',
       -- 'normal' applies the closest valid .width,.height mode to display,
@@ -47,7 +50,7 @@ function love.load()
       -- usual phone modes 320x480, no idea if screen orientation is supported, don't see any ref inside doc...
     }
 
-    -- media.player.scaling = 'ui'            -- scale to ui size
+    -- media.player.scaling = 'ui'         -- scale to ui size
 
     media.player.ui = {                    -- if you wish some predefined frame as a skin, this is the right place to define that.
       frame = 'ui.png'
