@@ -33,9 +33,10 @@ function love.load()
     media.audio.source = 'output.mp3'      -- audio source
     media.player.keyboard = {}             -- allows keyboard input
     media.player.mouse = {}                -- allows mouse input
-    
+    media.frame.resizeto = 'ui'              -- resize frames
+
     media.player.fullscreen = {
-      enable  = false,                      -- fullscreen by default
+      enable  = true,                     -- fullscreen by default
       lock    = false,                     -- lock fullscreen
       type    = 'normal',
       -- 'normal' applies the closest valid .width,.height mode to display,
