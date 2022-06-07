@@ -53,12 +53,7 @@ function media.load()
 
   if media.player.mode == 'video' then
     media.player.setup( 3, 25, 1/25 )
-    media.player.ui = {}
-    media.player.ui.frame = love.graphics.newImage( 'ui.png' )
-    if media.player.ui.frame then
-      media.player.ui.width = media.player.ui.frame:getWidth()
-      media.player.ui.height = media.player.ui.frame:getHeight()
-    end
+
   elseif media.player.mode == 'diaporama' then
     media.player.setup( 1, 25, 1/25 )
     media.player.effect = {}
@@ -79,6 +74,23 @@ function media.load()
   
   else
     assert( media.player.mode, "no media.player.mode set, cannot continue." )
+  end
+
+
+  if media.player.ui then
+
+    if media.player.ui.frame then
+      assert( type( media.player.ui.frame ) == 'string',
+        'media.player.ui.frame: doesn\'t look like a string.' )
+      assert( love.filesystem.isFile( media.player.ui.frame ),
+        'That file:"'.. media.player.ui.frame ..'" doesn\'t exists.' )
+      media.player.ui.frame = love.graphics.newImage( media.player.ui.frame )
+      
+      if media.player.ui.frame then
+        media.player.ui.width = media.player.ui.frame:getWidth()
+        media.player.ui.height = media.player.ui.frame:getHeight()
+      end
+    end
   end
 
   if media.player.ui then
@@ -132,7 +144,6 @@ function media.load()
   
   loader.width = 30                         -- loader bar width
   loader.height = 10                        -- loader bar height
-
 
   loader.x = (media.window.width-media.player.ui.width)/2 + media.player.ui.width/2   -- loader x axis
   loader.y = (media.window.height-media.player.ui.height)/2 + media.player.ui.height-15        -- loader y axis (cuz i know ui thickness...)
