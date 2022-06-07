@@ -11,7 +11,7 @@ function love.conf(t)
 
     t.window.title = 'media.love'      -- The window title (string)
     t.window.icon = 'media.png'        -- Filepath to an image to use as the window's icon (string)
-    t.window.width = 600               -- The window width (number)
+    t.window.width = 640               -- The window width (number)
     t.window.height = 480              -- The window height (number)
     t.window.borderless = true         -- Remove all border visuals from the window (boolean)
     t.window.resizable = false         -- Let the window be user-resizable (boolean)

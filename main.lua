@@ -35,14 +35,18 @@ function love.load()
     media.player.mouse = {}                -- allows mouse input
     
     media.player.fullscreen = {
-      enable  = true,                      -- fullscreen by default
+      enable  = false,                      -- fullscreen by default
       lock    = false,                     -- lock fullscreen
       type    = 'normal',
       -- 'normal' applies the closest valid .width,.height mode to display,
       -- 'desktop' setup fullscreen to window from display size
       width = 640,                         -- applies to 'normal' type
-      height  = 480                        -- applies to 'normal' type
+      height = 480                         -- applies to 'normal' type
+      -- usual PC modes 640x480, 800x600, 1024x768, 1280x720...
+      -- usual phone modes 320x480, no idea if screen orientation is supported, don't see any ref inside doc...
     }
+
+    -- media.player.scaling = 'ui'            -- scale to ui size
 
     media.player.ui = {                    -- if you wish some predefined frame as a skin, this is the right place to define that.
       frame = 'ui.png'

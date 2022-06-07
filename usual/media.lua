@@ -6,15 +6,15 @@ media = {}
 media.player = {}
 media.frame = {}
 media.window = {}
-media.window.update = function()
+media.window.updateDimensions = function()
   media.window.width,
   media.window.height,
   media.window.flags = love.window.getMode()
 end
 media.display = {}
-media.display.update = function()
+media.display.getDimensions = function()
   if not media.window.flags then
-    media.window.update()
+    media.window.updateDimensions()
   end
   media.display.width,
   media.display.height = love.window.getDesktopDimensions( media.window.flags.display )
@@ -57,15 +57,18 @@ function media.player.setup( step, fps, dpf )
 end
 
 function media.load()
+  media.display.getDimensions()
+
   media.player.dt = 0                 -- delta time
   media.player.timeelapsed = 0
   media.player.playing = false
   media.player.pathprefix = 'frames/'
-  media.player.fileprefix = 'frame-'  
+  media.player.fileprefix = 'frame-'
   media.player.fileext = '.png'       -- .bmp, .tga, .jpg
-  media.player.scaling = 'frame'      -- by default scale to 'frame', possible option remaining on the way
-  media.window.update()
-  
+  if not media.player.scaling then
+    media.player.scaling = 'window'      -- by default scale to 'window', possible option remaining on the way
+  end
+
   if media.player.mode == 'video' then
     media.player.setup( 3, 25, 1/25 )
 
@@ -87,29 +90,38 @@ function media.load()
     assert( media.player.mode, "no media.player.mode set, cannot continue." )
   end
 
-
   if media.player.ui then
 
     if media.player.ui.frame then
       assert( type( media.player.ui.frame ) == 'string',
         'media.player.ui.frame: doesn\'t look like a string.' )
+      
       assert( love.filesystem.isFile( media.player.ui.frame ),
         'That file:"'.. media.player.ui.frame ..'" doesn\'t exists.' )
+
       media.player.ui.frame = love.graphics.newImage( media.player.ui.frame )
       
       if media.player.ui.frame then
         media.player.ui.width = media.player.ui.frame:getWidth()
         media.player.ui.height = media.player.ui.frame:getHeight()
-        media.player.ui.x = (media.window.width-media.player.ui.width)/2
-        media.player.ui.y = (media.window.height-media.player.ui.height)/2
-      end
 
+        assert( type( media.player.scaling ) == 'string', 'media.player.scaling wrong value.' )
+        
+        if media.player.scaling == 'ui' then
+          if media.player.ui.width ~= media.window.width or media.player.ui.height ~= media.window.height then
+            love.window.setMode( media.player.ui.width, media.player.ui.height, media.window.flags )
+            media.window.updateDimensions()
+          end
+        end
+        
+        media.player.ui.x = ( media.window.width-media.player.ui.width )/2
+        media.player.ui.y = ( media.window.height-media.player.ui.height )/2
+      end
     end
 
-    media.player.scaling = 'ui' -- autoswitch to ui scaling
-    media.player.ui.button_previous_frame = true
-    media.player.ui.button_next_frame = true
-    media.player.ui.button_quit = true
+    -- media.player.ui.button_previous_frame = true
+    -- media.player.ui.button_next_frame = true
+    -- media.player.ui.button_quit = true
   end
 
   media.frame = {
@@ -128,19 +140,16 @@ function media.load()
   if media.player.fullscreen and media.player.fullscreen.enable then
     assert( media.window.flags, "Missing window flags, cannot continue." )
     media.window.flags.fullscreen = true
-    if media.player.fullscreen.type == 'normal' then
-      love.window.setMode( media.player.fullscreen.width, media.player.fullscreen.height, media.window.flags )
-    elseif media.player.fullscreen.type == 'desktop' then
-      -- default to actual window width/height
-      love.window.setMode( media.window.width, media.window.height, media.window.flags )
+    if media.player.fullscreen.type then
+      if media.player.fullscreen.type == 'normal' then
+        love.window.setMode( media.player.fullscreen.width, media.player.fullscreen.height, media.window.flags )
+      elseif media.player.fullscreen.type == 'desktop' then
+        love.window.setMode( media.display.width, media.display.height, media.window.flags )
+      end
     end
   end
 
-  media.window.update()
-
-  media.display.update()
-
-  print( media.window.width, " " ,media.display.width )
+  media.window.updateDimensions()
 
   media.errorcooldown = 0
   media.error = nil
@@ -544,7 +553,7 @@ function media.draw()
   end
 
   if media.player.ui then
-    love.graphics.draw( media.player.ui.frame, (media.window.width-media.player.ui.width)/2, (media.window.height-media.player.ui.height)/2 )
+    love.graphics.draw( media.player.ui.frame, media.player.ui.x, media.player.ui.y )
   end
 
   media.loader.draw()
