@@ -6,8 +6,21 @@ media = {}
 media.player = {}
 media.frame = {}
 media.window = {}
+media.window.update = function()
+  media.window.width,
+  media.window.height,
+  media.window.flags = love.window.getMode()
+end
 media.display = {}
+media.display.update = function()
+  if not media.window.flags then
+    media.window.update()
+  end
+  media.display.width,
+  media.display.height = love.window.getDesktopDimensions( media.window.flags.display )
+end
 media.audio = {}
+media.loader = loader
 
 function media.player.setup( step, fps, dpf )
   if not media.player.step then
@@ -50,7 +63,9 @@ function media.load()
   media.player.pathprefix = 'frames/'
   media.player.fileprefix = 'frame-'  
   media.player.fileext = '.png'       -- .bmp, .tga, .jpg
-
+  media.player.scaling = 'frame'      -- by default scale to 'frame', possible option remaining on the way
+  media.window.update()
+  
   if media.player.mode == 'video' then
     media.player.setup( 3, 25, 1/25 )
 
@@ -85,10 +100,13 @@ function media.load()
       if media.player.ui.frame then
         media.player.ui.width = media.player.ui.frame:getWidth()
         media.player.ui.height = media.player.ui.frame:getHeight()
+        media.player.ui.x = (media.window.width-media.player.ui.width)/2
+        media.player.ui.y = (media.window.height-media.player.ui.height)/2
       end
+
     end
 
-    media.player.scaling = 'ui'
+    media.player.scaling = 'ui' -- autoswitch to ui scaling
     media.player.ui.button_previous_frame = true
     media.player.ui.button_next_frame = true
     media.player.ui.button_quit = true
@@ -107,17 +125,22 @@ function media.load()
     rendered = 0
   }
   
-  media.window.width,
-  media.window.height,
-  media.window.flags = love.window.getMode()
-
   if media.player.fullscreen and media.player.fullscreen.enable then
+    assert( media.window.flags, "Missing window flags, cannot continue." )
     media.window.flags.fullscreen = true
-    love.window.setMode( media.window.width, media.window.height, media.window.flags )
+    if media.player.fullscreen.type == 'normal' then
+      love.window.setMode( media.player.fullscreen.width, media.player.fullscreen.height, media.window.flags )
+    elseif media.player.fullscreen.type == 'desktop' then
+      -- default to actual window width/height
+      love.window.setMode( media.window.width, media.window.height, media.window.flags )
+    end
   end
 
-  media.display.width,
-  media.display.height = love.window.getDesktopDimensions( media.window.flags.display )
+  media.window.update()
+
+  media.display.update()
+
+  print( media.window.width, " " ,media.display.width )
 
   media.errorcooldown = 0
   media.error = nil
@@ -134,30 +157,30 @@ function media.load()
   end
 
   -------[[ loader ]]-------------------------------------------------------------------------
-  loader.loading = false                    -- loader processing
+  media.loader.loading = false                    -- media.loader processing
   
-  loader.width = 30                         -- loader bar width
-  loader.height = 10                        -- loader bar height
+  media.loader.width = 30                         -- media.loader bar width
+  media.loader.height = 10                        -- media.loader bar height
 
-  loader.x = (media.window.width-media.player.ui.width)/2 + media.player.ui.width/2   -- loader x axis
-  loader.y = (media.window.height-media.player.ui.height)/2 + media.player.ui.height-15        -- loader y axis (cuz i know ui thickness...)
+  media.loader.x = (media.window.width-media.player.ui.width)/2 + media.player.ui.width/2   -- media.loader x axis
+  media.loader.y = (media.window.height-media.player.ui.height)/2 + media.player.ui.height-15        -- media.loader y axis (cuz i know ui thickness...)
 
-  loader.current = 0
-  loader.max = 100
-  loader.padding = 3
+  media.loader.current = 0
+  media.loader.max = 100
+  media.loader.padding = 3
   
-  loader.color = {
+  media.loader.color = {
     outline = { 58, 55, 88, 255 },
     bar =     { 95, 205, 228, 255 },
     text =    { 95, 205, 228, 255 }
   }
   
-  loader.r,
-  loader.g,
-  loader.b,
-  loader.a = love.graphics.getColor()
+  media.loader.r,
+  media.loader.g,
+  media.loader.b,
+  media.loader.a = love.graphics.getColor()
   
-  loader.text = "loading ..."
+  media.loader.text = "loading ..."
 
   -- media.play()
 end
@@ -323,8 +346,13 @@ function media.fullscreen()
   local ok = false
   assert( media.window.flags, "Window structure missing... media.window.flags" )
   
-  if love.window.getFullscreen() and not media.player.lockfullscreen then
+  if media.player.fullscreen and media.player.fullscreen.lock then
+    return
+  end
+  
+  if love.window.getFullscreen() then
     media.window.flags.fullscreen = false
+    
     if media.player.scaling == 'ui' then
       ok = love.window.setMode( media.player.ui.width, media.player.ui.height, media.window.flags )
       media.window.width, media.window.height = media.player.ui.width, media.player.ui.height
@@ -336,8 +364,8 @@ function media.fullscreen()
       media.window.flags.fullscreen = true
       ok = love.window.setMode( media.display.width, media.display.height, media.window.flags )
       media.window.width, media.window.height = media.display.width, media.display.height
-      loader.x = (media.window.width-media.player.ui.width)/2 + media.player.ui.width/2   -- loader x axis
-      loader.y = (media.window.height-media.player.ui.height)/2 + media.player.ui.height-15
+      media.loader.x = (media.window.width-media.player.ui.width)/2 + media.player.ui.width/2   -- media.loader x axis
+      media.loader.y = (media.window.height-media.player.ui.height)/2 + media.player.ui.height-15
     end
   end  
   
@@ -353,11 +381,11 @@ end
 function media.update( dt )
   if media.player.cache and not media.playing then
     
-    loader.loading = true
+    media.loader.loading = true
     
     if dt < 0.04 then
       media.buf = media.loadcache()
-      loader.current = media.load
+      media.loader.current = media.load
       if media.load >= 100 then
         media.load = 0
       end
@@ -365,14 +393,14 @@ function media.update( dt )
     end
     
     if media.buf >= 100 then
-      loader.loading = false
-      loader.current = 100
+      media.loader.loading = false
+      media.loader.current = 100
       if media.player.autoplay then
         media.play()
       end
-      loader.text = "Done!"
+      media.loader.text = "Done!"
     elseif media.buf > 0 then
-      loader.text = media.frame.fullpath .. " " .. string.format( "%.02f%%", media.buf )
+      media.loader.text = media.frame.fullpath .. " " .. string.format( "%.02f%%", media.buf )
     end
   
   end
@@ -519,7 +547,7 @@ function media.draw()
     love.graphics.draw( media.player.ui.frame, (media.window.width-media.player.ui.width)/2, (media.window.height-media.player.ui.height)/2 )
   end
 
-  loader.draw()
+  media.loader.draw()
 end
 
 return media

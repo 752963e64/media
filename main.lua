@@ -33,13 +33,17 @@ function love.load()
     media.audio.source = 'output.mp3'      -- audio source
     media.player.keyboard = {}             -- allows keyboard input
     media.player.mouse = {}                -- allows mouse input
+    
     media.player.fullscreen = {
-      -- enable  = false,                  -- fullscreen by default
+      enable  = true,                      -- fullscreen by default
       lock    = false,                     -- lock fullscreen
-      type    = 'normal',                  -- 'normal' applies the closest valid .width,.height to display,
-      width   = 1024,                      -- 'desktop' setup fullscreen from display size
-      height  = 768
+      type    = 'normal',
+      -- 'normal' applies the closest valid .width,.height mode to display,
+      -- 'desktop' setup fullscreen to window from display size
+      width = 640,                         -- applies to 'normal' type
+      height  = 480                        -- applies to 'normal' type
     }
+
     media.player.ui = {                    -- if you wish some predefined frame as a skin, this is the right place to define that.
       frame = 'ui.png'
     }
