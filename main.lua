@@ -36,9 +36,12 @@ function love.load()
     media.player.fullscreen = {
       -- enable  = false,                  -- fullscreen by default
       lock    = false,                     -- lock fullscreen
-      type    = 'normal',                  -- 'normal' applies .width,.height to display, 'desktop' setup fullscreen from display size
-      width   = 1024,
+      type    = 'normal',                  -- 'normal' applies the closest valid .width,.height to display,
+      width   = 1024,                      -- 'desktop' setup fullscreen from display size
       height  = 768
+    }
+    media.player.ui = {                    -- if you wish some predefined frame as a skin, this is the right place to define that.
+      frame = 'ui.png'
     }
   end
 
