@@ -61,15 +61,11 @@ function media.load()
   
   elseif media.player.mode == 'presentation' then
     media.player.setup( 1, 25, 1/25 )
-    media.player.ui = {}
-    media.player.ui.mouse = true
-    media.player.ui.keyboard = true 
     media.player.effect = {}
     media.player.effect.slide_rightleft = true
   
   elseif media.player.mode == 'sprite' then
     media.player.setup( 1, 30, 1/30 )
-    media.player.ui = {}
     media.frame.sps = { 64, 64 } -- squared pratical shape
   
   else
@@ -91,9 +87,7 @@ function media.load()
         media.player.ui.height = media.player.ui.frame:getHeight()
       end
     end
-  end
 
-  if media.player.ui then
     media.player.scaling = 'ui'
     media.player.ui.button_previous_frame = true
     media.player.ui.button_next_frame = true
