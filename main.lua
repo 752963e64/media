@@ -10,6 +10,8 @@ end
   As you can see all the control is bind from there.
   The main goal is to keep media.lua an handy module
   for older love version, currently 9.1.
+  newer version got ogv addition so it's really of
+  special case if you wish to use it.
 
   The main things to perform are to setup media.player.mode,
   your audio source[optional], the control input you wish to handle[optional].
@@ -23,7 +25,7 @@ function love.load()
 
   if media.player then
     media.player.mode = 'video'            -- player mode
-    media.player.fps = 25                  -- fixed frame per sec  
+    media.player.fps = 25                  -- fixed frame per sec
     media.player.dpf = 1/media.player.fps  -- delta per frame
 
     -- optional, all of these can be omited.
@@ -31,8 +33,8 @@ function love.load()
     media.player.autoplay = true           -- play either directly or after loading cache
     media.player.font = 'ubuntu-b.ttf'     -- load some font
     media.audio.source = 'output.mp3'      -- audio source
-    media.player.keyboard = {}             -- allows keyboard input
-    media.player.mouse = {}                -- allows mouse input
+    -- media.player.keyboard = {}             -- allows keyboard input
+    -- media.player.mouse = {}                -- allows mouse input
     media.frame.resize = {                 -- if you wish to resize frames
       width = 480,
       height = 280
@@ -46,7 +48,7 @@ function love.load()
       -- 'desktop' setup fullscreen to window from display size
       width = 640,                         -- applies to 'normal' type
       height = 480                         -- applies to 'normal' type
-      -- usual PC modes 640x480, 800x600, 1024x768, 1280x720...
+      -- usual PC modes 640x480, 800x600, 1024x768, 1280x720
       -- usual phone modes 320x480, no idea if screen orientation is supported, don't see any ref inside doc...
     }
 

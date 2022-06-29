@@ -6,13 +6,14 @@ media = {}
 media.player = {}
 media.frame = {}
 media.window = {}
-media.window.defaultwidth = 640
-media.window.defaultheight = 480
 media.window.updateDimensions = function()
   media.window.width,
   media.window.height,
   media.window.flags = love.window.getMode()
+  media.window.defaultwidth = media.window.width
+  media.window.defaultheight = media.window.height
 end
+
 media.display = {}
 media.display.getDimensions = function()
   if not media.window.flags then
@@ -21,33 +22,22 @@ media.display.getDimensions = function()
   media.display.width,
   media.display.height = love.window.getDesktopDimensions( media.window.flags.display )
 end
+
 media.audio = {}
 media.loader = loader
 
 function media.player.setup( step, fps, dpf )
-  if not media.player.step then
-    media.player.step = step    -- control step second
-  end
+  media.player.step = media.player.step or step    -- control step second
   
-  if not media.player.fps then
-    media.player.fps = fps    -- fixed frame per sec
-  end
+  media.player.fps = media.player.fps or fps    -- fixed frame per sec
   
-  if not media.player.dpf then
-    media.player.dpf = dpf  -- fixed delta per frame
-  end
+  media.player.dpf = media.player.dpf or dpf  -- fixed delta per frame
 
-  if not media.player.pathprefix then
-    media.player.pathprefix = 'frames/'
-  end
+  media.player.pathprefix = media.player.pathprefix or 'frames/'
 
-  if not media.player.fileprefix then
-    media.player.fileprefix = 'frame-'  
-  end
+  media.player.fileprefix = media.player.fileprefix or 'frame-'
 
-  if not media.player.fileext then
-    media.player.fileext = '.png' -- .bmp, .tga, .jpg
-  end
+  media.player.fileext = media.player.fileext or '.png' -- .bmp, .tga, .jpg
 
   if media.player.font and type(media.player.font) == 'string' then
     helper.loadFont( media.player.font )
@@ -148,7 +138,6 @@ function media.load()
       media.frame.resize.height )
   end
 
-
   media.errorcooldown = 0
   media.error = nil
 
@@ -193,7 +182,6 @@ function media.load()
   end
 
   if media.player.fullscreen and media.player.fullscreen.enable then
-    assert( media.window.flags, "Missing window flags, cannot continue." )
     media.fullscreen()
   end
 
